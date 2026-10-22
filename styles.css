@@ -412,3 +412,16 @@
   font-weight: 400;
   line-height: 15px;
 }
+
+/* Overdue dates and times stay red, including while selected or hovered. */
+.calendar-deadlines .deadline-group .overdue .deadline-marker,
+.calendar-deadlines .deadline-group .overdue .deadline-marker:hover {
+  background: #ff6b82;
+  border-color: #ff6b82;
+  color: #1e1e1e;
+}
+
+.calendar-deadlines .overdue .deadline-title,
+.calendar-deadlines .overdue .deadline-task:hover .deadline-title {
+  color: #ff6b82;
+}
