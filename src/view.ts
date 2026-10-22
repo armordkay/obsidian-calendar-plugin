@@ -59,14 +59,16 @@ export default class CalendarView extends ItemView {
     this.registerEvent(this.app.workspace.on("file-open", this.onFileOpen));
 
     this.settings = null;
-    settings.subscribe((val) => {
-      this.settings = val;
+    this.register(
+      settings.subscribe((val) => {
+        this.settings = val;
 
-      // Refresh the calendar if settings change
-      if (this.calendar) {
-        this.calendar.tick();
-      }
-    });
+        // Refresh the calendar if settings change
+        if (this.calendar) {
+          this.calendar.tick();
+        }
+      })
+    );
   }
 
   getViewType(): string {
@@ -220,7 +222,7 @@ export default class CalendarView extends ItemView {
   }
 
   private updateActiveFile(): void {
-    const { view } = this.app.workspace.activeLeaf;
+    const view = this.app.workspace.activeLeaf?.view;
 
     let file = null;
     if (view instanceof FileView) {
@@ -229,6 +231,13 @@ export default class CalendarView extends ItemView {
     activeFile.setFile(file);
 
     if (this.calendar) {
+      const date = file && getDateFromFile(file, "day");
+      if (date) {
+        this.calendar.$set({ selectedDate: date, selectedWeek: null });
+      } else {
+        const week = file && getDateFromFile(file, "week");
+        if (week) this.calendar.$set({ selectedDate: week, selectedWeek: week });
+      }
       this.calendar.tick();
     }
   }
@@ -241,7 +250,7 @@ export default class CalendarView extends ItemView {
       // Check to see if the active note is a daily-note
       let date = getDateFromFile(activeLeaf.view.file, "day");
       if (date) {
-        this.calendar.$set({ displayedMonth: date });
+        this.calendar.$set({ displayedMonth: date, selectedDate: date, selectedWeek: null });
         return;
       }
 
@@ -306,7 +315,7 @@ export default class CalendarView extends ItemView {
     const leaf = inNewSplit
       ? workspace.splitActiveLeaf()
       : workspace.getUnpinnedLeaf();
-    await leaf.openFile(existingFile, { active : true, mode });
+    await leaf.openFile(existingFile, { active: true, state: { mode } });
 
     activeFile.setFile(existingFile);
   }

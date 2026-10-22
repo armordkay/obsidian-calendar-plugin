@@ -17,6 +17,30 @@ The plugin reads your Daily Note settings to know your date format, your daily n
 - Visualize your writing. Each day includes a meter to approximate how much you've written that day.
 - Use **Weekly notes** for an added organization layer! They work just like daily notes, but have their own customization options.
 
+## Deadlines below the calendar
+
+The deadline panel lists incomplete Markdown tasks from across the vault in one
+scrollable timeline, grouped by date, across all days, months and years. White
+backgrounds indicate days with deadlines. Selecting a calendar day scrolls to that day
+in the timeline (or the next available date) without filtering other deadlines.
+Click a date heading to select it on the calendar, or click a task to open its
+note at the task line. **Today** returns both views to today. The timeline height
+defaults to 420px and can be customized with `--calendar-deadlines-height`.
+
+Supported examples:
+
+```md
+- [ ] Submit report 📅 2026-10-23 ⏰ 2026-10-23 14:30
+- [ ] Meeting [due:: 2026-10-23T09:00]
+- [ ] Review [due:: 2026-10-23] [time:: 16:00]
+- [ ] Call (@2026-10-23 10:00)
+```
+
+Dates without a time appear as **All day**. Tasks are sorted by date and time;
+overdue times are highlighted. Editing, completing, deleting or moving a task in
+its source note updates the panel and calendar markers automatically. Taskido
+and Dataview are not required; the panel reads the underlying Markdown tasks.
+
 ## Settings
 
 - **Start week on [default: locale]**: Configure the Calendar view to show Sunday or Monday as the first day of the week. Choosing 'locale' will set the start day to be whatever is the default for your chosen locale (`Settings > About > Language`)

@@ -74,13 +74,7 @@ export default class CalendarPlugin extends Plugin {
 
     this.addSettingTab(new CalendarSettingsTab(this.app, this));
 
-    if (this.app.workspace.layoutReady) {
-      this.initLeaf();
-    } else {
-      this.registerEvent(
-        this.app.workspace.on("layout-ready", this.initLeaf.bind(this))
-      );
-    }
+    this.app.workspace.onLayoutReady(this.initLeaf.bind(this));
   }
 
   initLeaf(): void {

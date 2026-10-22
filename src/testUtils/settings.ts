@@ -1,3 +1,4 @@
+import { defaultSettings } from "src/settings";
 import type { ISettings } from "src/settings";
 
 export function getDefaultSettings(
@@ -5,6 +6,7 @@ export function getDefaultSettings(
 ): ISettings {
   return Object.assign(
     {},
+    defaultSettings,
     {
       weekStart: "sunday",
       shouldConfirmBeforeCreate: false,

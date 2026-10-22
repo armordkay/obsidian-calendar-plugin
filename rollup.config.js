@@ -2,8 +2,9 @@ import svelte from "rollup-plugin-svelte";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
-import autoPreprocess from "svelte-preprocess";
 import { env } from "process";
+
+const svelteConfig = require("./svelte.config.js");
 
 export default {
   input: "src/main.ts",
@@ -16,7 +17,7 @@ export default {
   plugins: [
     svelte({
       emitCss: false,
-      preprocess: autoPreprocess(),
+      preprocess: svelteConfig.preprocess,
     }),
     typescript({ sourceMap: env.env === "DEV" }),
     resolve({
