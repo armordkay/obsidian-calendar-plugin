@@ -9,3 +9,115 @@
 .settings-banner h4 {
   margin: 0;
 }
+
+/* Calendar only: keep these overrides separate from other plugins. */
+#calendar-container {
+  --color-background-heading: transparent;
+  --color-background-day: transparent;
+  --color-background-weeknum: transparent;
+  --color-background-weekend: transparent;
+  --color-dot: #5ead7e;
+  --color-text-title: #ffffff;
+  --color-text-heading: #5eb193;
+  --color-text-day: #c8c8c8;
+  --color-text-today: #0a0a0a;
+  --color-text-weeknum: #4a4a4a;
+
+  background-color: #1e1e1e !important;
+  padding: 10px !important;
+}
+
+#calendar-container,
+#calendar-container * {
+  font-family: Arial, sans-serif !important;
+  font-weight: 700 !important;
+}
+
+#calendar-container .calendar {
+  border-collapse: collapse !important;
+  border: none !important;
+  width: 100% !important;
+}
+
+#calendar-container .calendar td,
+#calendar-container .calendar th {
+  border: none !important;
+}
+
+#calendar-container .calendar thead th {
+  color: #5eb193 !important;
+  font-size: 14px !important;
+  font-weight: 1000 !important;
+  text-transform: none !important;
+  border-bottom: 1px solid #333 !important;
+  padding-bottom: 6px !important;
+}
+
+#calendar-container .week-num {
+  color: #4a4a4a !important;
+  font-size: 11px !important;
+}
+
+#calendar-container .day {
+  color: #c8c8c8 !important;
+  font-size: 14px !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+  cursor: pointer;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+#calendar-container .day.adjacent-month {
+  color: #3a3a3a !important;
+  opacity: 1;
+}
+
+#calendar-container .day:hover {
+  background-color: #2a3a4a !important;
+  color: #ffffff !important;
+}
+
+#calendar-container .day.today {
+  background-color: #62c5ec !important;
+  color: #0a0a0a !important;
+  border: none !important;
+}
+
+#calendar-container .day.active,
+#calendar-container .day.active:hover {
+  background-color: #5ead7e !important;
+  color: #0a0a0a !important;
+}
+
+#calendar-container .dot-container {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 1px;
+}
+
+/* Dots are SVGs; task markers must stay hollow. */
+#calendar-container .dot-container .dot,
+#calendar-container .dot-container .hollow {
+  width: 4px !important;
+  height: 4px !important;
+  margin: 0;
+}
+
+#calendar-container .dot-container .filled {
+  fill: #5ead7e !important;
+}
+
+#calendar-container .dot-container .hollow {
+  fill: none !important;
+  stroke: #5ead7e !important;
+}
+
+#calendar-container .month {
+  color: #ffffff !important;
+}
+
+#calendar-container .year {
+  color: #5eb193 !important;
+  font-size: 1.4em !important;
+}
