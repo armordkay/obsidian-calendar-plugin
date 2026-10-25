@@ -179,7 +179,7 @@
   box-shadow: none;
 }
 
-/* Selection remains green; the red inset also identifies an overdue selection. */
+/* Selection overrides every day state with a green background and no border. */
 .calendar-deadlines-root #calendar-container .day.active,
 .calendar-deadlines-root #calendar-container .day.active:hover,
 .calendar-deadlines-root #calendar-container .day.has-deadline.active,
@@ -189,12 +189,8 @@
   --cd-day-dot: var(--cd-selected-text);
   background: var(--cd-selected) !important;
   color: var(--cd-selected-text) !important;
-  box-shadow: none;
-}
-
-.calendar-deadlines-root #calendar-container .day.active.has-overdue-deadline,
-.calendar-deadlines-root #calendar-container .day.active.has-overdue-deadline:hover {
-  box-shadow: inset 0 0 0 2px var(--cd-danger-background);
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .calendar-deadlines-root #calendar-container .dot-container {

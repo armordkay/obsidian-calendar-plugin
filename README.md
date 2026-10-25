@@ -73,7 +73,7 @@ có virtual scrolling.
 | Có deadline | Nền trắng, chữ tối |
 | Có ít nhất một deadline quá hạn | Nền đỏ; tự cập nhật khi trễ giờ hoặc qua ngày |
 | Hôm nay | Xanh da trời; nếu có deadline thì viền xanh da trời |
-| Ngày đang chọn | Nền xanh lục, ưu tiên hơn deadline/hôm nay; viền đỏ nếu có deadline quá hạn |
+| Ngày đang chọn | Nền xanh lục, không viền, ưu tiên hơn deadline/quá hạn/hôm nay |
 | Deadline quá hạn | Nền icon, tên và giờ màu đỏ, kể cả khi hover/chọn |
 | Chấm đặc | Số từ trong Daily/Weekly Note; tối đa 5 chấm |
 | Chấm rỗng | Có task chưa hoàn thành trong Daily/Weekly Note |
