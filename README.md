@@ -70,7 +70,7 @@ có virtual scrolling.
 
 | Trạng thái | Hiển thị |
 | --- | --- |
-| Có deadline | Nền trắng, chữ tối |
+| Có deadline | Light mode: nền xám dịu, chữ tối; dark mode: nền trắng, chữ tối |
 | Có ít nhất một deadline quá hạn | Nền đỏ; tự cập nhật khi trễ giờ hoặc qua ngày |
 | Hôm nay | Xanh da trời; nếu có deadline thì viền xanh da trời |
 | Ngày đang chọn | Nền xanh lục, không viền, ưu tiên hơn deadline/quá hạn/hôm nay |
@@ -85,7 +85,8 @@ nền sáng và màu chữ/viền tương ứng.
 Giao diện **tự theo light/dark mode của Obsidian** (kể cả khi Obsidian theo hệ
 điều hành), đổi ngay khi theme của ứng dụng thay đổi. Không cần tải lại plugin
 hoặc bật công tắc riêng. Ngày chuyển đỏ nếu có bất kỳ task chưa hoàn thành nào
-đã quá hạn; hoàn thành task đó sẽ trả màu trắng nếu chỉ còn deadline chưa trễ.
+đã quá hạn; hoàn thành task đó sẽ trả về màu deadline của theme hiện tại nếu
+chỉ còn deadline chưa trễ.
 
 ## Cấu hình và ghi chú định kỳ
 

@@ -51,7 +51,10 @@
   --cd-selected: #72c698;
   --cd-today: #79d2f4;
   --cd-focus: #1670a0;
-  --cd-deadline-border: #9db8ce;
+  --cd-deadline: #dce2e8;
+  --cd-deadline-text: #24364b;
+  --cd-deadline-border: #aebbc8;
+  --cd-deadline-dot: #49637e;
   --cd-danger: #c93b52;
   --cd-danger-text: #ffffff;
 }

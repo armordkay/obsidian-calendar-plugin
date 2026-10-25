@@ -84,7 +84,7 @@ async function request(route, method = "GET", body) {
             equal(day.getBoundingClientRect().width, days[0].getBoundingClientRect().width, "equal day widths");
             const dot = day.querySelector(".dot");
             equal(getComputedStyle(dot).backgroundColor, "rgba(0, 0, 0, 0)", "no square dot background");
-            if (i >= 2 && i < 4) equal(getComputedStyle(dot).fill, color("--cd-deadline-dot"), "dark dot on white day");
+            if (i >= 2 && i < 4) equal(getComputedStyle(dot).fill, color("--cd-deadline-dot"), "dot contrast on deadline day");
             day.classList.add("active");
             const selected = getComputedStyle(day);
             equal(selected.backgroundColor, color("--cd-selected"), `selected day ${i}`);
