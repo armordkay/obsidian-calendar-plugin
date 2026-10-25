@@ -92,10 +92,23 @@
 }
 
 .calendar-deadlines-root #calendar-container .calendar {
+  /* Older Calendar snippets can force a dark table even in Obsidian light mode. */
+  background: transparent !important;
+  padding: 0 !important;
   border-collapse: collapse !important;
   border: none !important;
   width: 100% !important;
   table-layout: fixed;
+}
+
+.calendar-deadlines-root #calendar-container .calendar colgroup,
+.calendar-deadlines-root #calendar-container .calendar col,
+.calendar-deadlines-root #calendar-container .calendar thead,
+.calendar-deadlines-root #calendar-container .calendar tbody,
+.calendar-deadlines-root #calendar-container .calendar tr,
+.calendar-deadlines-root #calendar-container .calendar td,
+.calendar-deadlines-root #calendar-container .calendar th {
+  background: transparent !important;
 }
 
 .calendar-deadlines-root #calendar-container .calendar td,
@@ -203,6 +216,7 @@
 /* Filled note markers and hollow task markers share the current cell contrast. */
 .calendar-deadlines-root #calendar-container .dot-container .dot,
 .calendar-deadlines-root #calendar-container .dot-container .hollow {
+  background: transparent !important;
   width: 4px !important;
   height: 4px !important;
   flex: 0 0 4px;

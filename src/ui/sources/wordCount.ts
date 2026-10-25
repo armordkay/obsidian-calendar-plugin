@@ -16,7 +16,15 @@ export async function getWordLengthAsDots(note: TFile): Promise<number> {
   if (!note || wordsPerDot <= 0) {
     return 0;
   }
-  const fileContents = await window.app.vault.cachedRead(note);
+  let fileContents: string;
+  try {
+    fileContents = await window.app.vault.cachedRead(note);
+  } catch (error) {
+    // MetadataResolver awaits all sources together: a read failure must not hide
+    // the entire day, including its deadline colour and click target.
+    console.error(`[Calendar Deadlines] Could not count words in ${note.path}`, error);
+    return 0;
+  }
 
   const wordCount = getWordCount(fileContents);
   const numDots = wordCount / wordsPerDot;

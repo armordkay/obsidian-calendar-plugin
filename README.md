@@ -120,6 +120,9 @@ chú để mở file menu.
 
 CSS lịch được giới hạn trong `.calendar-deadlines-root` để tránh tác động lên
 Calendar gốc. Timeline dùng `.calendar-deadlines`.
+Nền bảng và dấu chấm được reset trong phạm vi này để snippet Calendar cũ
+không giữ nền tối khi Obsidian chuyển sang light mode; không cần tắt snippet
+nếu các plugin khác vẫn dùng nó.
 
 ```css
 .calendar-deadlines {
@@ -146,6 +149,20 @@ npm run build
 Build tạo `main.js`; Obsidian tải `styles.css` riêng. Test bao phủ parser, locale,
 giao tháng, index theo file, lỗi đọc file và cấu hình Weekly Note của fork.
 Kiểm tra tự động không thay thế việc thử trực tiếp trong Obsidian và trên mobile.
+
+Kiểm tra hồi quy CSS bằng Firefox thật (Node.js 22, Firefox và `geckodriver`
+có sẵn; không cần cài thêm npm dependency):
+
+```sh
+# Terminal 1: WebDriver chỉ lắng nghe localhost, dùng profile Firefox tạm.
+geckodriver --host 127.0.0.1 --port 4444
+# Terminal 2:
+node scripts/check-theme.cjs
+```
+
+Có thể đặt `WEBDRIVER_URL` nếu dùng cổng khác. Kiểm tra bao gồm chuyển theme,
+snippet nền tối ở cả hai thứ tự nạp CSS, màu deadline/quá hạn, chấm ghi chú,
+ngày chọn khi hover và phạm vi CSS không ảnh hưởng Calendar gốc.
 
 `manifest.json`, `package.json` và `versions.json` phải đồng bộ phiên bản.
 Workflow phát hành chỉ chạy khi push tag phiên bản khớp, đóng gói thư mục
