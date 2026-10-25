@@ -2,7 +2,7 @@ import type { TFile } from "obsidian";
 import {
   getAllDailyNotes,
   getAllWeeklyNotes,
-} from "obsidian-daily-notes-interface";
+} from "src/io/periodicNotes";
 import { writable } from "svelte/store";
 
 import { defaultSettings, ISettings } from "src/settings";
@@ -21,7 +21,7 @@ function createDailyNotesStore() {
       } catch (err) {
         if (!hasError) {
           // Avoid error being shown multiple times
-          console.log("[Calendar] Failed to find daily notes folder", err);
+          console.log("[Calendar Deadlines] Failed to find daily notes folder", err);
         }
         store.set({});
         hasError = true;
@@ -43,7 +43,7 @@ function createWeeklyNotesStore() {
       } catch (err) {
         if (!hasError) {
           // Avoid error being shown multiple times
-          console.log("[Calendar] Failed to find weekly notes folder", err);
+          console.log("[Calendar Deadlines] Failed to find weekly notes folder", err);
         }
         store.set({});
         hasError = true;

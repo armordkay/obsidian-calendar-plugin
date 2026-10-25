@@ -1,7 +1,7 @@
 import type { Moment } from "moment";
 import type { TFile } from "obsidian";
 import type { ICalendarSource, IDayMetadata, IDot } from "obsidian-calendar-ui";
-import { getDailyNote, getWeeklyNote } from "obsidian-daily-notes-interface";
+import { getDailyNote, getWeeklyNote } from "src/io/periodicNotes";
 import { get } from "svelte/store";
 
 import { dailyNotes, weeklyNotes } from "../stores";
@@ -11,9 +11,8 @@ export async function getNumberOfRemainingTasks(note: TFile): Promise<number> {
     return 0;
   }
 
-  const { vault } = window.app;
-  const fileContents = await vault.cachedRead(note);
-  return (fileContents.match(/(-|\*) \[ \]/g) || []).length;
+  const items = window.app.metadataCache.getFileCache(note)?.listItems || [];
+  return items.filter(item => item.task === " ").length;
 }
 
 export async function getDotsForDailyNote(

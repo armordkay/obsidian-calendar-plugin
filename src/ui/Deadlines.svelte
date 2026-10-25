@@ -2,7 +2,9 @@
   import type { Moment } from "moment";
   import { onMount, tick } from "svelte";
   import { Notice, TFile } from "obsidian";
-  import { groupDeadlines, parseDeadline, sortDeadlines } from "./deadlines";
+  import { groupDeadlines } from "./deadlines";
+  import { DeadlineIndex } from "src/io/deadlineIndex";
+  import { dateKey as getDateKey, isOverdue } from "./dates";
   import type { Deadline } from "./deadlines";
 
   export let selectedDate: Moment;
@@ -12,9 +14,10 @@
   let timelineEl: HTMLDivElement;
   let lastScrolledDate = "";
   let loading = true;
-  let failed = false;
+  let failedPaths: string[] = [];
+  let retry = () => {};
 
-  $: dateKey = selectedDate.format("YYYY-MM-DD");
+  $: dateKey = getDateKey(selectedDate);
   $: groups = groupDeadlines(tasks);
   $: if (timelineEl && groups.length) scrollToDate(dateKey);
 
@@ -34,89 +37,91 @@
   function jumpToToday() {
     lastScrolledDate = "";
     onSelectDate(today.clone());
-    scrollToDate(today.format("YYYY-MM-DD"));
+    scrollToDate(getDateKey(today));
   }
 
   async function openTask(task: Deadline) {
     const { vault, workspace } = window.app;
     const file = vault.getAbstractFileByPath(task.path);
-    if (!(file instanceof TFile)) return;
-    onSelectDate(window.moment(task.date, "YYYY-MM-DD", true));
+    if (!(file instanceof TFile)) {
+      new Notice("This deadline note no longer exists. The list will update after indexing.");
+      return;
+    }
+    onSelectDate(window.moment(task.date, "YYYY-MM-DD", "en", true).locale(today.locale()));
     try {
-      await workspace.getUnpinnedLeaf().openFile(file, {
+      await workspace.getLeaf(false).openFile(file, {
         active: true,
         eState: { line: task.line },
       });
-      onSelectDate(window.moment(task.date, "YYYY-MM-DD", true));
+      onSelectDate(window.moment(task.date, "YYYY-MM-DD", "en", true).locale(today.locale()));
     } catch (error) {
       new Notice("Could not open deadline note.");
-      console.error("[Calendar] Could not open deadline", error);
+      console.error("[Calendar Deadlines] Could not open deadline", error);
     }
   }
 
   onMount(() => {
     const { vault, metadataCache } = window.app;
+    const index = new DeadlineIndex(window.app);
+    const pending = new Map<string, TFile>();
     let disposed = false;
-    let revision = 0;
     let timer: ReturnType<typeof setTimeout>;
-    // Reuse unchanged file results when the metadata cache updates.
-    const cache = new Map<string, { content: string; tasks: Deadline[] }>();
 
-    async function refresh() {
-      const current = ++revision;
-      try {
-        const result: Deadline[] = [];
-        const paths = new Set<string>();
-        for (const file of vault.getMarkdownFiles()) {
-          if (disposed || current !== revision) return;
-          paths.add(file.path);
-          const items = metadataCache.getFileCache(file)?.listItems || [];
-          const pending = items.filter(item => item.task === " ");
-          if (!pending.length) {
-            cache.delete(file.path);
-            continue;
-          }
-          const content = await vault.cachedRead(file);
-          const previous = cache.get(file.path);
-          if (previous?.content === content) {
-            result.push(...previous.tasks);
-            continue;
-          }
-          const lines = content.split(/\r?\n/);
-          const parsed = pending.map(item => parseDeadline(
-            lines[item.position.start.line] || "", file.path, item.position.start.line
-          )).filter((task): task is Deadline => !!task);
-          cache.set(file.path, { content, tasks: parsed });
-          result.push(...parsed);
-        }
-        if (!disposed && current === revision) {
-          for (const path of cache.keys()) if (!paths.has(path)) cache.delete(path);
-          tasks = sortDeadlines(result);
-          failed = false;
-        }
-      } catch (error) {
-        if (!disposed && current === revision) failed = true;
-        console.error("[Calendar] Failed to load deadlines", error);
-      } finally {
-        if (!disposed && current === revision) loading = false;
+    function publish() {
+      if (disposed) return;
+      tasks = index.tasks;
+      failedPaths = index.failedPaths;
+      loading = false;
+    }
+
+    async function rescan(force = false) {
+      await index.reindex(force);
+      publish();
+    }
+
+    async function flush() {
+      const batch = Array.from(pending.values());
+      pending.clear();
+      for (const file of batch) {
+        if (disposed) return;
+        await index.update(file, true);
       }
+      publish();
     }
 
-    function schedule() {
-      revision++;
+    function changed(file: TFile) {
+      if (file.extension !== "md") return;
+      pending.set(file.path, file);
       clearTimeout(timer);
-      timer = setTimeout(refresh, 200);
+      timer = setTimeout(flush, 200);
     }
+
+    function remove(path: string) {
+      for (const key of pending.keys()) {
+        if (key === path || key.startsWith(`${path}/`)) pending.delete(key);
+      }
+      index.remove(path);
+      publish();
+    }
+
+    retry = () => { void rescan(true); };
     const events = [
-      { emitter: metadataCache, ref: metadataCache.on("changed", schedule) },
-      { emitter: metadataCache, ref: metadataCache.on("resolved", schedule) },
-      { emitter: vault, ref: vault.on("delete", schedule) },
-      { emitter: vault, ref: vault.on("rename", schedule) },
+      { emitter: metadataCache, ref: metadataCache.on("changed", changed) },
+      // On startup, files may not have metadata yet. Fingerprints skip unchanged reads.
+      { emitter: metadataCache, ref: metadataCache.on("resolved", () => { void rescan(); }) },
+      { emitter: vault, ref: vault.on("delete", file => remove(file.path)) },
+      { emitter: vault, ref: vault.on("rename", (file, oldPath) => {
+        remove(oldPath);
+        if (file instanceof TFile) changed(file);
+        else void rescan();
+      }) },
     ];
-    refresh();
+    void rescan();
     return () => {
       disposed = true;
       clearTimeout(timer);
+      pending.clear();
+      index.dispose();
       events.forEach(({ emitter, ref }) => emitter.offref(ref));
     };
   });
@@ -128,9 +133,13 @@
     <button on:click={jumpToToday}>Today</button>
   </div>
   <p class="deadline-period">All dates · {selectedDate.format("ddd, DD MMM YYYY")}</p>
-  {#if failed}
-    <p role="status">Could not load deadlines. Edit a note to retry.</p>
-  {:else if loading}
+  {#if failedPaths.length}
+    <p role="status" title={failedPaths.join("\n")}>
+      Could not read {failedPaths.length} note(s).
+      <button on:click={retry}>Retry</button>
+    </p>
+  {/if}
+  {#if loading}
     <p role="status">Loading deadlines…</p>
   {:else if !tasks.length}
     <p class="deadline-empty">No deadlines.</p>
@@ -140,13 +149,12 @@
         {#each groups as group (group.date)}
           <div class="deadline-group" class:selected={group.date === dateKey} data-deadline-date={group.date}>
             <button class="deadline-date" aria-current={group.date === dateKey ? "date" : undefined}
-              on:click={() => onSelectDate(window.moment(group.date, "YYYY-MM-DD", true))}>
-              {window.moment(group.date, "YYYY-MM-DD", true).format("ddd, DD MMM YYYY")}
+              on:click={() => onSelectDate(window.moment(group.date, "YYYY-MM-DD", "en", true).locale(today.locale()))}>
+              {window.moment(group.date, "YYYY-MM-DD", "en", true).locale(today.locale()).format("ddd, DD MMM YYYY")}
             </button>
             <ul>
               {#each group.tasks as task (`${task.path}:${task.line}`)}
-                <li class:overdue={task.date < today.format("YYYY-MM-DD") ||
-                  (task.date === today.format("YYYY-MM-DD") && task.time && task.time < today.format("HH:mm"))}>
+                <li class:overdue={isOverdue(task, today)}>
                   <button class="deadline-marker" aria-label={`Open ${task.text}`} on:click={() => openTask(task)}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                       <rect x="3" y="5" width="18" height="16" rx="2" />

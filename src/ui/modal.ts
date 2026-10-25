@@ -1,4 +1,4 @@
-import { App, Modal } from "obsidian";
+import { App, Modal, Notice } from "obsidian";
 
 interface IConfirmationDialogParams {
   cta: string;
@@ -28,8 +28,18 @@ export class ConfirmationModal extends Modal {
           text: cta,
         })
         .addEventListener("click", async (e) => {
-          await onAccept(e);
-          this.close();
+          const button = e.currentTarget as HTMLButtonElement;
+          if (button.disabled) return;
+          button.disabled = true;
+          try {
+            await onAccept(e);
+            this.close();
+          } catch (error) {
+            new Notice("Could not create note. Check the folder and template, then retry.");
+            console.error("[Calendar Deadlines] Note creation failed", error);
+          } finally {
+            button.disabled = false;
+          }
         });
     });
   }

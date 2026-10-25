@@ -1,226 +1,166 @@
-# obsidian-calendar-plugin
+# Calendar Deadlines
 
-This plugin for [Obsidian](https://obsidian.md/) creates a simple Calendar view for visualizing and navigating between your daily notes.
+Plugin Obsidian kết hợp lịch ghi chú ngày/tuần với timeline deadline có thể cuộn.
+Plugin được phát triển độc lập dưới ID **`calendar-deadlines`**, dựa trên
+[Calendar của Liam Cain](https://github.com/liamcain/obsidian-calendar-plugin).
 
-![screenshot-full](https://raw.githubusercontent.com/liamcain/obsidian-calendar-plugin/master/images/screenshot-full.png)
+## Tính năng
 
-## Usage
+- Mở hoặc tạo Daily Note bằng cách chọn ngày; hỗ trợ template và xác nhận trước khi tạo.
+- Mở Weekly Note từ số tuần hoặc Command Palette.
+- Đọc task Markdown chưa hoàn thành trong **toàn bộ vault**, không giới hạn ở Daily Notes.
+- Hiển thị tất cả deadline theo ngày và giờ trong một timeline liên tục, xuyên tháng/năm.
+- Chọn ngày trên lịch để cuộn tới ngày đó trong timeline; chọn ngày trong timeline để đổi tháng trên lịch.
+- Bấm icon hoặc tên công việc để mở ghi chú tại dòng chứa task.
+- Tự cập nhật khi sửa, hoàn thành, xóa, đổi tên hoặc di chuyển ghi chú.
+- Đánh dấu deadline quá hạn theo ngày hoặc giờ bằng màu đỏ.
+- Không cần cài Dataview, Tasks hay Taskido để sử dụng timeline.
 
-After enabling the plugin in the settings menu, you should see the calendar view appear in the right sidebar.
+## Cài đặt thủ công
 
-The plugin reads your Daily Note settings to know your date format, your daily note template location, and the location for new daily notes it creates.
+Yêu cầu tối thiểu được khai báo: **Obsidian 1.0.0**. Khả năng chạy trên từng
+phiên bản Obsidian và trên thiết bị di động cần được kiểm tra thực tế.
 
-## Features
+1. Lấy `main.js`, `manifest.json` và `styles.css` từ bản build hoặc bản phát hành của fork này.
+2. Tạo thư mục `<vault>/.obsidian/plugins/calendar-deadlines/`.
+3. Chép cả ba file vào thư mục đó.
+4. Tải lại Obsidian, bật **Calendar Deadlines** trong Community plugins.
 
-- Go to any **daily note**.
-- Create new daily notes for days that don't have one. (This is helpful for when you need to backfill old notes or if you're planning ahead for future notes! This will use your current **daily note** template!)
-- Visualize your writing. Each day includes a meter to approximate how much you've written that day.
-- Use **Weekly notes** for an added organization layer! They work just like daily notes, but have their own customization options.
+Khi cập nhật, thay cả ba file rồi tắt/bật lại plugin. Giữ `data.json` nếu muốn
+giữ cấu hình. Không cài fork vào thư mục `calendar` của plugin gốc.
 
-## Deadlines below the calendar
+Plugin có view type riêng `calendar-deadlines-view`, nên không dùng chung panel
+với Calendar gốc. Nếu nâng cấp từ bản fork cũ từng dùng view type `calendar`,
+hãy đóng panel cũ và chạy **Calendar Deadlines: Open view**. Plugin không tự sửa
+panel hoặc dữ liệu cấu hình của Calendar gốc.
 
-The deadline panel lists incomplete Markdown tasks from across the vault in one
-scrollable timeline, grouped by date, across all days, months and years. White
-backgrounds indicate days with deadlines. Selecting a calendar day scrolls to that day
-in the timeline (or the next available date) without filtering other deadlines.
-Click a date heading to select it on the calendar, or click a task to open its
-note at the task line. **Today** returns both views to today. The timeline height
-defaults to 420px and can be customized with `--calendar-deadlines-height`.
+## Viết deadline
 
-Supported examples:
+Trong bất kỳ file Markdown nào trong vault:
 
 ```md
-- [ ] Submit report 📅 2026-10-23 ⏰ 2026-10-23 14:30
-- [ ] Meeting [due:: 2026-10-23T09:00]
-- [ ] Review [due:: 2026-10-23] [time:: 16:00]
-- [ ] Call (@2026-10-23 10:00)
+- [ ] Nộp báo cáo 📅 2026-10-25 ⏰ 2026-10-25 14:30
+- [ ] Họp nhóm [due:: 2026-10-25T09:00]
+- [ ] Review tài liệu [due:: 2026-10-25] [time:: 16:00]
+- [ ] Gọi điện (@2026-10-25 10:00)
+- [ ] 08:30 Chuẩn bị bài 📅 2026-10-26
+- [ ] Công việc cả ngày 📅 2026-10-27
 ```
 
-Dates without a time appear as **All day**. Tasks are sorted by date and time;
-overdue times are highlighted. Editing, completing, deleting or moving a task in
-its source note updates the panel and calendar markers automatically. Taskido
-and Dataview are not required; the panel reads the underlying Markdown tasks.
+- Ngày dùng `YYYY-MM-DD`, giờ dùng `HH:mm` trong múi giờ địa phương của thiết bị.
+- Hỗ trợ task `- [ ]`, `* [ ]`, `+ [ ]`, danh sách đánh số và task trong blockquote được Obsidian nhận diện.
+- Chỉ checkbox trống `[ ]` được xem là chưa hoàn thành. `[x]`, `[-]` và các trạng thái tùy chỉnh khác không xuất hiện.
+- Nếu có cả due date và reminder, due date quyết định ngày deadline. Giờ reminder chỉ được dùng khi cùng ngày với due date.
+- Không có giờ: hiển thị **All day**, quá hạn khi sang ngày tiếp theo.
+- Có giờ: quá hạn khi đồng hồ đã qua phút đó. Trạng thái cập nhật khoảng mỗi phút khi view đang mở.
+- Ngày hoặc giờ ghi sai sẽ không được đưa vào timeline; không tự biến giờ sai thành deadline cả ngày.
+- Chưa hỗ trợ time range, giây, timezone offset, natural language, hoặc suy ra deadline từ tên file.
+- Task mẫu trong code block không được tính. Nội dung lấy từ metadata Markdown, không thực thi DataviewJS.
 
-## Settings
+Timeline sắp xếp ngày tăng dần, trong ngày sắp xếp giờ tăng dần, rồi đến task cả ngày.
+Chọn ngày không có deadline sẽ cuộn tới ngày kế tiếp có deadline; các ngày khác
+vẫn có thể xem bằng cách cuộn. Nút **Today** đưa lịch và timeline về hôm nay.
 
-- **Start week on [default: locale]**: Configure the Calendar view to show Sunday or Monday as the first day of the week. Choosing 'locale' will set the start day to be whatever is the default for your chosen locale (`Settings > About > Language`)
-- **Words per Dot [default: 250]**: Starting in version 1.3, dots reflect the word count of your files. By default, each dot represents 250 words, you can change that value to whatever you want. Set this to `0` to disable the word count entirely. **Note:** There is a max of 5 dots so that the view doesn't get too big!
-- **Confirm before creating new note [default: on]**: If you don't like that a modal prompts you before creating a new daily note, you can turn it off.
-- **Show Week Number [default: off]**: Enable this to add a new column to the calendar view showing the [Week Number](https://en.wikipedia.org/wiki/Week#Week_numbering). Clicking on these cells will open your **weekly note**.
+Index chỉ đọc lại ghi chú thay đổi; lần mở đầu và lúc metadata hoàn tất sẽ đối
+chiếu toàn vault. Nếu một file không đọc được, deadline của các file khác vẫn
+hiển thị, kèm thông báo và nút **Retry**. Danh sách dài có vùng cuộn, hiện chưa
+có virtual scrolling.
 
-## Customization
+## Màu sắc và dấu chấm
 
-The following CSS Variables can be overridden in your `obsidian.css` file.
+| Trạng thái | Hiển thị |
+| --- | --- |
+| Có deadline | Nền trắng, chữ tối |
+| Có ít nhất một deadline quá hạn | Nền đỏ; tự cập nhật khi trễ giờ hoặc qua ngày |
+| Hôm nay | Xanh da trời; nếu có deadline thì viền xanh da trời |
+| Ngày đang chọn | Nền xanh lục, ưu tiên hơn deadline/hôm nay; viền đỏ nếu có deadline quá hạn |
+| Deadline quá hạn | Nền icon, tên và giờ màu đỏ, kể cả khi hover/chọn |
+| Chấm đặc | Số từ trong Daily/Weekly Note; tối đa 5 chấm |
+| Chấm rỗng | Có task chưa hoàn thành trong Daily/Weekly Note |
+
+Chấm dùng màu tương phản với nền ô ngày, giữ chấm task rỗng. Khung lịch và
+timeline được bo tròn bốn góc. Dark mode dùng nền xám tối; light mode dùng
+nền sáng và màu chữ/viền tương ứng.
+
+Giao diện **tự theo light/dark mode của Obsidian** (kể cả khi Obsidian theo hệ
+điều hành), đổi ngay khi theme của ứng dụng thay đổi. Không cần tải lại plugin
+hoặc bật công tắc riêng. Ngày chuyển đỏ nếu có bất kỳ task chưa hoàn thành nào
+đã quá hạn; hoàn thành task đó sẽ trả màu trắng nếu chỉ còn deadline chưa trễ.
+
+## Cấu hình và ghi chú định kỳ
+
+- **Words per dot:** mặc định 250; đặt 0 để tắt chấm số từ.
+- **Start week on:** ngày bắt đầu tuần hoặc theo locale.
+- **Confirm before creating new note:** xác nhận trước khi tạo Daily/Weekly Note.
+- **Show week number:** bật cột số tuần và cấu hình Weekly Note.
+- **Override locale:** locale hiển thị lịch; khóa ngày và tính quá hạn vẫn dùng dạng số cố định.
+
+Daily Note đọc folder, format và template từ **Daily Notes** của Obsidian hoặc
+phần daily đang bật trong **Periodic Notes**. Timeline deadline hoạt động độc lập
+với hai plugin đó. File có tên giống ngày nhưng ở ngoài folder Daily Note sẽ
+không bị nhận nhầm là Daily Note.
+
+Weekly Note ưu tiên phần weekly đang bật trong **Periodic Notes**. Nếu không bật,
+plugin dùng `weeklyNoteFolder`, `weeklyNoteFormat`, `weeklyNoteTemplate` của chính
+**Calendar Deadlines**, không đọc cấu hình Calendar gốc. Format mặc định:
+`gggg-[W]ww`. Template hỗ trợ `{{title}}`, `{{date}}`, `{{time}}`, định dạng ngày
+và các placeholder như `{{monday:YYYY-MM-DD}}`.
+
+## Command Palette
+
+- **Calendar Deadlines: Open view** — mở lại hoặc hiện panel.
+- **Calendar Deadlines: Open Weekly Note** — mở/tạo ghi chú tuần hiện tại.
+- **Calendar Deadlines: Reveal active note** — chuyển lịch tới Daily/Weekly Note đang mở.
+
+Các lệnh cần panel sẽ mở lại panel nếu đã đóng. Ctrl/Cmd-click ngày mở ghi chú
+trong pane khác. Ctrl/Cmd-hover hỗ trợ preview; chuột phải lên ngày/tuần có ghi
+chú để mở file menu.
+
+## Tùy chỉnh CSS và tích hợp
+
+CSS lịch được giới hạn trong `.calendar-deadlines-root` để tránh tác động lên
+Calendar gốc. Timeline dùng `.calendar-deadlines`.
 
 ```css
-/* obsidian-calendar-plugin */
-/* https://github.com/liamcain/obsidian-calendar-plugin */
-
-#calendar-container {
-  --color-background-heading: transparent;
-  --color-background-day: transparent;
-  --color-background-weeknum: transparent;
-  --color-background-weekend: transparent;
-
-  --color-dot: var(--text-muted);
-  --color-arrow: var(--text-muted);
-  --color-button: var(--text-muted);
-
-  --color-text-title: var(--text-normal);
-  --color-text-heading: var(--text-muted);
-  --color-text-day: var(--text-normal);
-  --color-text-today: var(--interactive-accent);
-  --color-text-weeknum: var(--text-muted);
+.calendar-deadlines {
+  --calendar-deadlines-height: 560px;
 }
 ```
 
-In addition to the CSS Variables, there are some classes you can override for further customization. For example, if you don't like how bright the title is, you can override it with:
+Plugin khác có thể nghe event **`calendar-deadlines:open`**, nhận mảng nguồn dữ
+liệu `ICalendarSource[]` và thêm nguồn trước khi lịch được tạo. Fork không phát
+event `calendar:open` của plugin gốc.
 
-```css
-#calendar-container .year {
-  color: var(--text-normal);
-}
+## Phát triển
+
+Dùng **Node.js 22** và npm. `package-lock.json` là lockfile của CI và phát hành;
+`yarn.lock` được giữ để tương thích checkout cũ.
+
+```sh
+npm ci
+npm run typecheck
+npm test -- --runInBand
+npm run build
 ```
 
-> **Note:** It's especially important when overriding the classes to prefix them with `#calendar-container` to avoid any unexpected changes within Obsidian!
+Build tạo `main.js`; Obsidian tải `styles.css` riêng. Test bao phủ parser, locale,
+giao tháng, index theo file, lỗi đọc file và cấu hình Weekly Note của fork.
+Kiểm tra tự động không thay thế việc thử trực tiếp trong Obsidian và trên mobile.
 
-### Caution to Theme Creators
+`manifest.json`, `package.json` và `versions.json` phải đồng bộ phiên bản.
+Workflow phát hành chỉ chạy khi push tag phiên bản khớp, đóng gói thư mục
+`calendar-deadlines/` và đính kèm đủ ba file cài đặt. Chạy build cục bộ không
+commit, push hoặc phát hành plugin.
 
-If you use "Inspect Element" on the calendar, you will notice that the CSS classes are quite illegible. For example: `.task.svelte-1lgyrog.svelte-1lgyrog`. What's going on here? The classes that begin with `svelte-` are autogenerated and are used to avoid the calendar styles affecting any other elements in the app. That being said: **ignore them!** Those CSS classes are likely to change from release to release, and your overrides _will_ break. Just target the human-readable part of the class names. So to override `task.svelte-1lgyrog.svelte-1lgyrog`, you should use `#calendar-container .task { ... }`
+## Nguồn gốc và giấy phép
 
-## Compatibility
+**Tác giả Calendar gốc: [Liam Cain](https://github.com/liamcain).**
+Mã nguồn gốc: [liamcain/obsidian-calendar-plugin](https://github.com/liamcain/obsidian-calendar-plugin).
+Fork Calendar Deadlines được phát triển bởi **[armordkay](https://github.com/armordkay)**.
 
-`obsidian-calendar-plugin` currently requires Obsidian v0.9.11 or above to work properly.
+Phần lịch sử dụng `obsidian-calendar-ui`; giao diện Daily Notes sử dụng
+`obsidian-daily-notes-interface`, cũng thuộc hệ sinh thái của Liam Cain.
+Phần template ghi chú tuần kế thừa cú pháp từ các dự án này.
 
-## Installation
-
-You can install the plugin via the Community Plugins tab within Obsidian. Just search for "Calendar."
-
-## FAQ
-
-### What do the dots mean?
-
-Each solid dot represents 250 words in your daily note. So 4 dots means you've written a thousands words for that day! If you want to change that threshold, you can set a different value for "Words Per Dot" in the Calendar settings.
-
-The hollow dots, on the other hand, mean that the day has incomplete tasks in it. (**Note:** There will only ever be 1 hollow dot on a particular day, regardless of the number of remaining tasks)
-
-### How do I change the styling of the Calendar?
-
-By default, the calendar should seamlessly match your theme, but if you'd like to further customize it, you can! In your `obsidian.css` file (inside your vault) you can configure the styling to your heart's content.
-
-### Can I add week numbers to the calendar?
-
-In the settings, you can enable "Show Week Numbers" to add a "week number" column to the calendar. Click on the week number to open a "weekly note".
-
-### How do I hide the calendar plugin without disabling the plugin?
-
-Just like other sidebar views (e.g. Backlinks, Outline), the calendar view can be closed by right-clicking on the view icon.
-
-![how-to-close](./images/how-to-close.png)
-
-### I accidentally closed the calendar. How do I reopen it?
-
-If you close the calendar widget (right-clicking on the panel nav and clicking close), you can always reopen the view from the Command Palette. Just search for `Calendar: Open view`.
-
-![how-to-reopen](./images/how-to-reopen.png)
-
-### How do I have the calendar start on Monday?
-
-From the Settings menu, you can toggle "Start week on Monday".
-
-### How do I include "unformatted" words in my weekly note filenames?
-
-If you want the weekly note format to include a word (e.g. "Week 21 of Year 2020") you can do so by surrounding the words with `[]` brackets. This tells [moment](https://momentjs.com/docs/#/displaying/format/) to ignore the words. So for the example above, you would set your format to `[Week] ww [of Year] gggg`.
-
-### I don't like showing the week numbers but I still want to use weekly notes. Can I still use them?
-
-You can open the current weekly note from the command palette by searching `Calendar: Open weekly Note`. This will open the weekly note for the current week.
-
-To configure the `format`, `folder`, and `template`, you will temporarily need to toggle on "Show weekly numbers" in the settings, but if you toggle it back off, your settings will persist.
-
-## Protips
-
-### Embed your entire week in a weekly note
-
-If you add the following snippet to your weekly note template, you can a seamless view of your week in a single click.
-
-```md
-## Week at a Glance
-
-![[{{sunday:gggg-MM-DD}}]]
-![[{{monday:gggg-MM-DD}}]]
-![[{{tuesday:gggg-MM-DD}}]]
-![[{{wednesday:gggg-MM-DD}}]]
-![[{{thursday:gggg-MM-DD}}]]
-![[{{friday:gggg-MM-DD}}]]
-![[{{saturday:gggg-MM-DD}}]]
-```
-
-### Hover Preview
-
-Just like the Obsidian's graph and internal links, the calendar supports page previews for your daily notes. Just hover over a cell while holding down `Ctrl/Cmd` on your keyboard!
-
-### The calendar can be moved (and pinned!) anywhere
-
-Just because the calendar appears in the right sidebar doesn't mean it has to stay there. Feel free to drag it to the left sidebar, or (if you have the screen real estate for it) into the main content area. If you move it out of the sidebar, the view can even be pinned; great for more advanced tile layouts!
-
-![how-to-pin](./images/how-to-pin.png)
-
-### Open daily notes in a new split
-
-If you `Ctrl/Command`-Click on a note in your calendar, it will open daily note in a new split. Useful if you want to open a bunch of daily notes in a row (especially if you have the **Sliding Panes** plugin enabled!)
-
-### Reveal open note on calendar
-
-If you open a note from a different month, you might want to see it on the calendar view. To do so, you can run the command `Calendar: Reveal open note` from the command palette.
-
-### Add custom styling for weekends
-
-If you want to style weekends to be distinguishable from weekdays, you can set the `var(--color-background-weekend)` to be any color you want.
-
-![how-to-weekend](./images/how-to-weekend.png)
-
-### Weekly Notes (deprecated)
-
-#### Weekly notes have a new home
-
-The weekly note functionality has been split out into its [very own plugin](https://github.com/liamcain/obsidian-periodic-notes/). In the future, the functionality will be removed from the Calendar plugin; so if you're currently using weekly notes, I encourage you to make the switch. Don't worry, the behavior is functionally identical and will still integrate with the calendar view!
-
-This split was inspired by the [One Thing Well](https://en.wikipedia.org/wiki/Unix_philosophy) philosophy. Plugins should be as modular. Some users might want weekly notes and have no use for a calendar view. And vice versa.
-
-If you are currently using weekly notes within the Calendar plugin, the new Periodic Notes plugin will migrate your settings for you automatically.
-
-### Usage
-
-You can open **weekly notes** in 2 ways: searching `Calendar: open weekly note` in the command palette or by clicking on the week number. Weekly notes can be configured from the Calendar settings. There are 3 settings:
-
-- **Folder:** The folder that your weekly notes go into. It can be the same or different from your daily notes. By default they are placed in your vault root.
-- **Template:** Configure a template for weekly notes. Weekly notes have slightly different template tags than daily notes. See here for the list of supported [weekly note template tags](#template-tags).
-
-> Note: The path here won't autocomplete for you, you'll need to enter the full path.
-
-- **Format:** The date format for the weekly note filename. Defaults to `"gggg-[W]ww`. If you use `DD` in the week format, this will refer to first day of the week (Sunday or Monday, depending on your settings).
-
-#### Template Tags
-
-| Tag                                                                                    | Description                                                                                                                                                                                                  |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sunday`, `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, `saturday`, `sunday` | Because weekly tags refer to main days, you can refer to individual days like this `{{sunday:gggg-MM-DD}}` to automatically insert the date for that particular day. Note, you must specify the date format! |
-| `title`                                                                                | Works the same as the daily note `{{title}}`. It will insert the title of the note                                                                                                                           |
-| `date`, `time`                                                                         | Works the same as the daily note `{{date}}` and `{{time}}`. It will insert the date and time of the first day of the week. Useful for creating a heading (e.g. `# # {{date:gggg [Week] ww}}`).               |
-
-## See it in action
-
-- [Nick Milo provides a nice plugin walkthrough](https://www.youtube.com/watch?v=X61wRmfZU8Y&t=1099s)
-- [Santi Younger demos how Calendar + Periodic Notes can be used for weekly review](https://www.youtube.com/watch?v=T9y8JABS9_Q)
-- [Filipe Donadio uses the calendar to plan his day](https://www.youtube.com/watch?v=hxf3_dXIcqc)
-
-## Say Thanks 🙏
-
-If you like this plugin and would like to buy me a coffee, you can!
-
-[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="BuyMeACoffee" width="100">](https://www.buymeacoffee.com/liamcain)
-
-Like my work and want to see more like it? You can sponsor me.
-
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/liamcain?style=social)](https://github.com/sponsors/liamcain)
+Phân phối theo [MIT License](LICENSE). Giữ nguyên thông báo bản quyền của Liam
+Cain, cùng thông báo cho các thay đổi của fork.

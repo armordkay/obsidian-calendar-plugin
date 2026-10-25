@@ -4,7 +4,8 @@ import type { ILocaleOverride, IWeekStartOption } from "obsidian-calendar-ui";
 
 import { DEFAULT_WEEK_FORMAT, DEFAULT_WORDS_PER_DOT } from "src/constants";
 
-import type CalendarPlugin from "./main";
+import type CalendarDeadlinesPlugin from "./main";
+import { localeWeekSpec } from "./ui/locale";
 
 export interface ISettings {
   wordsPerDot: number;
@@ -50,10 +51,10 @@ export function appHasPeriodicNotesPluginLoaded(): boolean {
   return periodicNotes && periodicNotes.settings?.weekly?.enabled;
 }
 
-export class CalendarSettingsTab extends PluginSettingTab {
-  private plugin: CalendarPlugin;
+export class CalendarDeadlinesSettingsTab extends PluginSettingTab {
+  private plugin: CalendarDeadlinesPlugin;
 
-  constructor(app: App, plugin: CalendarPlugin) {
+  constructor(app: App, plugin: CalendarDeadlinesPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -62,14 +63,14 @@ export class CalendarSettingsTab extends PluginSettingTab {
     this.containerEl.empty();
 
     if (!appHasDailyNotesPluginLoaded()) {
-      this.containerEl.createDiv("settings-banner", (banner) => {
+      this.containerEl.createDiv("calendar-deadlines-settings-banner", (banner) => {
         banner.createEl("h3", {
           text: "⚠️ Daily Notes plugin not enabled",
         });
         banner.createEl("p", {
           cls: "setting-item-description",
           text:
-            "The calendar is best used in conjunction with either the Daily Notes plugin or the Periodic Notes plugin (available in the Community Plugins catalog).",
+            "Enable Daily Notes or Periodic Notes to configure daily note folders and templates. The deadline timeline works independently.",
         });
       });
     }
@@ -92,7 +93,7 @@ export class CalendarSettingsTab extends PluginSettingTab {
       this.containerEl.createEl("p", {
         cls: "setting-item-description",
         text:
-          "Note: Weekly Note settings are moving. You are encouraged to install the 'Periodic Notes' plugin to keep the functionality in the future.",
+          "Calendar Deadlines uses these settings unless weekly notes are enabled in Periodic Notes.",
       });
       this.addWeeklyNoteFormatSetting();
       this.addWeeklyNoteTemplateSetting();
@@ -125,7 +126,7 @@ export class CalendarSettingsTab extends PluginSettingTab {
     const { moment } = window;
 
     const localizedWeekdays = moment.weekdays();
-    const localeWeekStartNum = window._bundledLocaleWeekSpec.dow;
+    const localeWeekStartNum = localeWeekSpec().dow;
     const localeWeekStart = moment.weekdays()[localeWeekStartNum];
 
     new Setting(this.containerEl)

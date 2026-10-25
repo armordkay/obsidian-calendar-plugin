@@ -3,7 +3,7 @@ import type { TFile } from "obsidian";
 import {
   createWeeklyNote,
   getWeeklyNoteSettings,
-} from "obsidian-daily-notes-interface";
+} from "src/io/periodicNotes";
 
 import type { ISettings } from "src/settings";
 import { createConfirmationDialog } from "src/ui/modal";
@@ -23,6 +23,7 @@ export async function tryToCreateWeeklyNote(
 
   const createFile = async () => {
     const dailyNote = await createWeeklyNote(date);
+    if (!dailyNote) throw new Error("Weekly note creation returned no file");
     const leaf = inNewSplit
       ? workspace.splitActiveLeaf()
       : workspace.getUnpinnedLeaf();

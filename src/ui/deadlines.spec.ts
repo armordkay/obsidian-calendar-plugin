@@ -39,6 +39,12 @@ describe("deadline task parsing", () => {
     "- [x] Done 📅 2026-10-23", "- [-] Cancelled 📅 2026-10-23",
     "- Report 📅 2026-10-23", "- [ ] No deadline",
     "- [ ] Invalid 📅 2026-02-30", "- [ ] Invalid [due:: 2026-13-01]",
+    "- [ ] Invalid 📅 2026-10-25 25:99", "- [ ] Invalid [due:: 2026-10-25T25:99]",
+    "- [ ] Invalid 📅 2026-10-25 [time:: 09:75]",
+    "- [ ] 29:00 Task 📅 2026-10-25",
+    "- [ ] Invalid ⏰ 2026-10-25 14:99",
+    "- [ ] Invalid 📅 2026-10-250",
+    "- [ ] Invalid [due:: 2026-10-25T14:30Z]",
   ])("ignores completed, cancelled, non-task or invalid entries: %s", text => {
     expect(parse(text)).toBeNull();
   });

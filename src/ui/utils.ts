@@ -1,5 +1,5 @@
 import type { TFile } from "obsidian";
-import { getDateFromFile, getDateUID } from "obsidian-daily-notes-interface";
+import { getDateFromFile, getDateUID } from "src/io/periodicNotes";
 
 export const classList = (obj: Record<string, boolean>): string[] => {
   return Object.entries(obj)

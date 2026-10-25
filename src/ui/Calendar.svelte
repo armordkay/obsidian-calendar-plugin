@@ -2,10 +2,7 @@
 
 <script lang="ts">
   import type { Moment } from "moment";
-  import {
-    Calendar as CalendarBase,
-    configureGlobalMomentLocale,
-  } from "obsidian-calendar-ui";
+  import { Calendar as CalendarBase } from "obsidian-calendar-ui";
   import type { ICalendarSource } from "obsidian-calendar-ui";
   import { onDestroy } from "svelte";
   import { getDateUID } from "obsidian-daily-notes-interface";
@@ -14,6 +11,9 @@
   import { dailyNotes, settings, weeklyNotes } from "./stores";
   import Deadlines from "./Deadlines.svelte";
   import type { Deadline } from "./deadlines";
+  import { followCurrentMonth } from "./dates";
+  import { configureCalendarLocale } from "./locale";
+  import { createDeadlineSource } from "./sources/deadlines";
 
   let today: Moment;
 
@@ -32,19 +32,8 @@
   export let onContextMenuDay: (date: Moment, event: MouseEvent) => boolean;
   export let onContextMenuWeek: (date: Moment, event: MouseEvent) => boolean;
 
-  // Rebuild the source when tasks change so the calendar refreshes its metadata.
-  $: calendarSources = [...sources, deadlineSource(deadlineTasks)];
-
-  function deadlineSource(tasks: Deadline[]): ICalendarSource {
-    const dates = new Set(tasks.map(task => task.date));
-    return {
-      getDailyMetadata: async (date) => ({
-        classes: dates.has(date.format("YYYY-MM-DD")) ? ["has-deadline"] : [],
-        dots: dates.has(date.format("YYYY-MM-DD"))
-          ? [{ className: "deadline-dot", color: "default", isFilled: true }] : [],
-      }),
-    };
-  }
+  // Expiry changes with the clock even when task files do not change.
+  $: calendarSources = [...sources, createDeadlineSource(deadlineTasks, today)];
 
   function selectDate(date: Moment) {
     selectedWeek = null;
@@ -64,33 +53,27 @@
   }
 
   export function tick() {
-    today = window.moment();
+    const next = window.moment();
+    displayedMonth = followCurrentMonth(displayedMonth, today, next);
+    today = next;
   }
 
   function getToday(settings: ISettings) {
-    configureGlobalMomentLocale(settings.localeOverride, settings.weekStart);
+    configureCalendarLocale(settings.localeOverride, settings.weekStart);
     dailyNotes.reindex();
     weeklyNotes.reindex();
     return window.moment();
   }
 
   // 1 minute heartbeat to keep `today` reflecting the current day
-  let heartbeat = setInterval(() => {
-    tick();
-
-    const isViewingCurrentMonth = displayedMonth.isSame(today, "day");
-    if (isViewingCurrentMonth) {
-      // if it's midnight on the last day of the month, this will
-      // update the display to show the new month.
-      displayedMonth = today;
-    }
-  }, 1000 * 60);
+  const heartbeat = setInterval(tick, 1000 * 60);
 
   onDestroy(() => {
     clearInterval(heartbeat);
   });
 </script>
 
+<div class="calendar-deadlines-root">
 <CalendarBase
   sources={calendarSources}
   {today}
@@ -107,3 +90,4 @@
 />
 
 <Deadlines {selectedDate} {today} bind:tasks={deadlineTasks} onSelectDate={selectDate} />
+</div>

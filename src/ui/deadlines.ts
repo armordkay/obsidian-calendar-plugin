@@ -11,32 +11,42 @@ function validDate(date: string): boolean {
   return !isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 }
 
-/** Parse one cached Markdown task, without evaluating Dataview expressions. */
+function validTime(time: string): boolean {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
+}
+
+function parseStamp(value: string): { date: string; time: string } | null {
+  const match = value.trim().match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\S+))?$/);
+  if (!match || !validDate(match[1]) || (match[2] && !validTime(match[2]))) return null;
+  return { date: match[1], time: match[2] || "" };
+}
+
+/** Parse one cached task. Invalid explicit dates/times are never changed to all-day. */
 export function parseDeadline(text: string, path: string, line: number): Deadline | null {
   const task = text.match(/^\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+\[ \]\s+(.*)$/);
   if (!task) return null;
-
   const body = task[1];
-  const due = body.match(/(?:📅\s*|\[due::\s*)(\d{4}-\d{2}-\d{2})(?:[ T]([01]\d|2[0-3]):([0-5]\d))?/i);
-  const reminder = body.match(/(?:⏰\s*|\(@)(\d{4}-\d{2}-\d{2})(?:[ T]([01]\d|2[0-3]):([0-5]\d))?/);
-  const match = due || reminder;
-  if (!match || !validDate(match[1])) return null;
+  const due = body.match(/\[due::\s*([^\]]*)\]/i) ||
+    body.match(/📅\s*(\d{4}-\d{2}-\d{2}(?:T[^\s]+| +\d{1,2}:[^\s]+)?)(?![\dT])/);
+  const reminder = body.match(/\(@([^)]*)\)/) ||
+    body.match(/⏰\s*(\d{4}-\d{2}-\d{2}(?:T[^\s]+| +\d{1,2}:[^\s]+)?)(?![\dT])/);
+  const stamp = due || reminder;
+  if (!stamp) return null;
+  const parsed = parseStamp(stamp[1]);
+  const reminderStamp = reminder && parseStamp(reminder[1]);
+  if (!parsed || (reminder && !reminderStamp)) return null;
 
-  const leadingTime = body.match(/^([01]\d|2[0-3]):([0-5]\d)\b/);
-  const inlineTime = body.match(/\[time::\s*([01]\d|2[0-3]):([0-5]\d)\s*\]/i);
-  const timeMatch = match[2] ? match :
-    reminder && reminder[1] === match[1] && reminder[2] ? reminder : null;
-  const time = timeMatch ? `${timeMatch[2]}:${timeMatch[3]}` :
-    inlineTime ? `${inlineTime[1]}:${inlineTime[2]}` :
-    leadingTime ? `${leadingTime[1]}:${leadingTime[2]}` : "";
-
-  const title = body
-    .replace(/\[(?:due|time)::[^\]]*\]/gi, "")
-    .replace(/(?:📅|⏰)\s*\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2})?/g, "")
-    .replace(/\(@\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2})?\)/g, "")
-    .replace(/^\d{2}:\d{2}\s*/, "")
-    .trim();
-  return { path, line, date: match[1], time, text: title || "Untitled task" };
+  const inline = body.match(/\[time::\s*([^\]]*)\]/i);
+  const leading = body.match(/^(\d{1,2}:\S+)(?:\s+|$)/);
+  if ((inline && !validTime(inline[1].trim())) || (leading && !validTime(leading[1]))) return null;
+  const time = parsed.time ||
+    (reminderStamp?.date === parsed.date ? reminderStamp.time : "") ||
+    inline?.[1].trim() || leading?.[1] || "";
+  let title = body;
+  for (const field of [due, reminder, inline, leading]) {
+    if (field) title = title.replace(field[0], "");
+  }
+  return { path, line, date: parsed.date, time, text: title.trim() || "Untitled task" };
 }
 
 export function sortDeadlines(tasks: Deadline[]): Deadline[] {
