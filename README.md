@@ -63,7 +63,8 @@ vẫn có thể xem bằng cách cuộn. Nút **Today** đưa lịch và timelin
 
 Index chỉ đọc lại ghi chú thay đổi; lần mở đầu và lúc metadata hoàn tất sẽ đối
 chiếu toàn vault. Nếu một file không đọc được, deadline của các file khác vẫn
-hiển thị, kèm thông báo và nút **Retry**. Danh sách dài có vùng cuộn, hiện chưa
+hiển thị, kèm thông báo và nút **Retry**. Timeline hiển thị đầy đủ chiều cao,
+dùng thanh cuộn chung của panel Obsidian, không có thanh cuộn riêng. Hiện chưa
 có virtual scrolling.
 
 ## Màu sắc và dấu chấm
@@ -125,11 +126,8 @@ Nền bảng và dấu chấm được reset trong phạm vi này để snippet 
 không giữ nền tối khi Obsidian chuyển sang light mode; không cần tắt snippet
 nếu các plugin khác vẫn dùng nó.
 
-```css
-.calendar-deadlines {
-  --calendar-deadlines-height: 560px;
-}
-```
+Timeline không giới hạn chiều cao; tùy chỉnh `--calendar-deadlines-height` của
+các bản cũ không còn được sử dụng.
 
 Plugin khác có thể nghe event **`calendar-deadlines:open`**, nhận mảng nguồn dữ
 liệu `ICalendarSource[]` và thêm nguồn trước khi lịch được tạo. Fork không phát

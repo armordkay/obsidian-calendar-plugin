@@ -5,6 +5,7 @@
   import { groupDeadlines } from "./deadlines";
   import { DeadlineIndex } from "src/io/deadlineIndex";
   import { dateKey as getDateKey, isOverdue } from "./dates";
+  import { getScrollContainer, scrollTimelineControl } from "./scroll";
   import type { Deadline } from "./deadlines";
 
   export let selectedDate: Moment;
@@ -21,23 +22,26 @@
   $: groups = groupDeadlines(tasks);
   $: if (timelineEl && groups.length) scrollToDate(dateKey);
 
-  async function scrollToDate(date: string) {
-    if (lastScrolledDate === date) return;
+  async function scrollToDate(date: string, force = false) {
+    if (!force && lastScrolledDate === date) return;
+    const initial = !lastScrolledDate;
     lastScrolledDate = date;
+    // Opening the panel should leave the calendar visible above the timeline.
+    if (initial && !force) return;
     await tick();
     if (!timelineEl || lastScrolledDate !== date) return;
     const days = Array.from(timelineEl.querySelectorAll<HTMLElement>("[data-deadline-date]"));
     // With no deadlines on the selected day, reveal the next available day.
     const target = days.find(day => day.dataset.deadlineDate >= date) || days[days.length - 1];
-    if (target) {
-      timelineEl.scrollTop += target.getBoundingClientRect().top - timelineEl.getBoundingClientRect().top;
+    const panel = getScrollContainer(timelineEl.parentElement);
+    if (target && panel) {
+      panel.scrollTop += target.getBoundingClientRect().top - panel.getBoundingClientRect().top - panel.clientTop;
     }
   }
 
   function jumpToToday() {
-    lastScrolledDate = "";
     onSelectDate(today.clone());
-    scrollToDate(getDateKey(today));
+    scrollToDate(getDateKey(today), true);
   }
 
   async function openTask(task: Deadline) {
@@ -144,7 +148,8 @@
   {:else if !tasks.length}
     <p class="deadline-empty">No deadlines.</p>
   {:else}
-    <div class="deadline-scroll" bind:this={timelineEl} tabindex="0" role="region" aria-label="Deadline timeline for all dates">
+    <div class="deadline-scroll" bind:this={timelineEl} on:wheel|capture|nonpassive={scrollTimelineControl}
+      tabindex="0" role="region" aria-label="Deadline timeline for all dates">
       <div class="deadline-timeline">
         {#each groups as group (group.date)}
           <div class="deadline-group" class:selected={group.date === dateKey} data-deadline-date={group.date}>
