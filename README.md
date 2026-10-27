@@ -95,7 +95,17 @@ chỉ còn deadline chưa trễ.
 - **Start week on:** ngày bắt đầu tuần hoặc theo locale.
 - **Confirm before creating new note:** xác nhận trước khi tạo Daily/Weekly Note.
 - **Show week number:** bật cột số tuần và cấu hình Weekly Note.
+- **Open panel on startup:** mặc định bật (ON), nằm ngay dưới **Show week number**.
+  Tắt (OFF) để plugin không chủ động mở/hiện panel khi vào Obsidian hoặc khi
+  bật lại plugin. Lựa chọn được lưu và áp dụng ở lần nạp plugin tiếp theo;
+  gạt công tắc không tự mở/đóng panel đang dùng. Cấu hình cũ chưa có tùy chọn
+  này vẫn mặc định ON.
 - **Override locale:** locale hiển thị lịch; khóa ngày và tính quá hạn vẫn dùng dạng số cố định.
+
+Khi tự mở đang OFF, các lệnh **Open view**, **Open Weekly Note** và
+**Reveal active note** vẫn mở panel theo yêu cầu. Obsidian vẫn có thể khôi
+phục panel từ workspace đã lưu; OFF không tự đóng panel hoặc thu gọn sidebar
+đã được Obsidian khôi phục.
 
 Daily Note đọc folder, format và template từ **Daily Notes** của Obsidian hoặc
 phần daily đang bật trong **Periodic Notes**. Timeline deadline hoạt động độc lập

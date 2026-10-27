@@ -30,7 +30,7 @@ jest.mock("./view", () => ({
   },
 }));
 jest.mock("./settings", () => ({
-  defaultSettings: { weekStart: "locale" },
+  defaultSettings: { weekStart: "locale", openOnStartup: true },
   CalendarDeadlinesSettingsTab: jest.fn(),
 }));
 jest.mock("./ui/stores", () => ({
@@ -63,6 +63,132 @@ function setup() {
     CalendarDeadlinesPlugin & { commands: Command[] };
   return { app, plugin, leaf, original, activeFile };
 }
+
+async function layoutReady({ app, plugin }: ReturnType<typeof setup>) {
+  const open = jest.spyOn(plugin, "initLeaf");
+  const before = open.mock.calls.length;
+  app.workspace.onLayoutReady.mock.calls[0][0]();
+  if (open.mock.calls.length > before) await open.mock.results[before].value;
+  return open;
+}
+
+it("defaults old configurations to startup ON", async () => {
+  const context = setup();
+  await context.plugin.onload();
+  expect(context.plugin.options.openOnStartup).toBe(true);
+  const open = await layoutReady(context);
+  expect(open).toHaveBeenCalledTimes(1);
+  expect(context.app.workspace.revealLeaf).toHaveBeenCalledTimes(1);
+});
+
+it.each([true, false])("respects startup %s when enabled after the layout is already ready", async value => {
+  const { app, plugin } = setup();
+  jest.spyOn(plugin, "loadData").mockResolvedValue({ openOnStartup: value });
+  app.workspace.onLayoutReady.mockImplementation(callback => callback());
+  const open = jest.spyOn(plugin, "initLeaf");
+  await plugin.onload();
+  if (value) await open.mock.results[0].value;
+  expect(open).toHaveBeenCalledTimes(value ? 1 : 0);
+  expect(app.workspace.revealLeaf).toHaveBeenCalledTimes(value ? 1 : 0);
+});
+
+it("reuses a restored pane when startup is ON", async () => {
+  const context = setup();
+  await context.plugin.onload();
+  await context.plugin.initLeaf();
+  const restored = context.leaf.view;
+  context.app.workspace.getRightLeaf.mockClear();
+  context.app.workspace.revealLeaf.mockClear();
+  context.leaf.setViewState.mockClear();
+  await layoutReady(context);
+  expect(context.app.workspace.getRightLeaf).not.toHaveBeenCalled();
+  expect(context.leaf.setViewState).not.toHaveBeenCalled();
+  expect(context.app.workspace.revealLeaf).toHaveBeenCalledWith(context.leaf);
+  expect(context.leaf.view).toBe(restored);
+});
+
+it("preserves saved startup OFF and does not create or reveal panes", async () => {
+  const context = setup();
+  jest.spyOn(context.plugin, "loadData").mockResolvedValue({ openOnStartup: false });
+  const save = jest.spyOn(context.plugin, "saveData");
+  await context.plugin.onload();
+  expect(context.plugin.options.openOnStartup).toBe(false);
+  expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ openOnStartup: false }));
+  const open = await layoutReady(context);
+  expect(open).not.toHaveBeenCalled();
+  expect(context.app.workspace.getRightLeaf).not.toHaveBeenCalled();
+  expect(context.leaf.setViewState).not.toHaveBeenCalled();
+  expect(context.app.workspace.revealLeaf).not.toHaveBeenCalled();
+});
+
+it("leaves restored panes untouched when startup is OFF", async () => {
+  const context = setup();
+  jest.spyOn(context.plugin, "loadData").mockResolvedValue({ openOnStartup: false });
+  await context.plugin.onload();
+  await context.plugin.initLeaf();
+  const restored = context.leaf.view;
+  context.app.workspace.revealLeaf.mockClear();
+  context.leaf.setViewState.mockClear();
+  const open = await layoutReady(context);
+  expect(open).not.toHaveBeenCalled();
+  expect(context.app.workspace.revealLeaf).not.toHaveBeenCalled();
+  expect(context.leaf.setViewState).not.toHaveBeenCalled();
+  expect(context.leaf.detach).not.toHaveBeenCalled();
+  expect(context.leaf.view).toBe(restored);
+});
+
+it.each([[true, false], [false, true]])(
+  "uses the latest option before layout becomes ready (%s to %s)", async (initial, latest) => {
+    const context = setup();
+    jest.spyOn(context.plugin, "loadData").mockResolvedValue({ openOnStartup: initial });
+    await context.plugin.onload();
+    await context.plugin.writeOptions(() => ({ openOnStartup: latest }));
+    expect(context.app.workspace.revealLeaf).not.toHaveBeenCalled();
+    expect(context.leaf.detach).not.toHaveBeenCalled();
+    const open = await layoutReady(context);
+    expect(open).toHaveBeenCalledTimes(latest ? 1 : 0);
+    expect(context.app.workspace.revealLeaf).toHaveBeenCalledTimes(latest ? 1 : 0);
+  }
+);
+
+it("saves ON then OFF without changing other settings", async () => {
+  const { plugin } = setup();
+  jest.spyOn(plugin, "loadData").mockResolvedValue({ openOnStartup: false, weekStart: "monday" });
+  const save = jest.spyOn(plugin, "saveData");
+  await plugin.onload();
+  save.mockClear();
+  await plugin.writeOptions(() => ({ openOnStartup: true }));
+  await plugin.writeOptions(() => ({ openOnStartup: false }));
+  expect(save).toHaveBeenNthCalledWith(1, expect.objectContaining({ openOnStartup: true, weekStart: "monday" }));
+  expect(save).toHaveBeenNthCalledWith(2, expect.objectContaining({ openOnStartup: false, weekStart: "monday" }));
+});
+
+it("keeps all manual commands available when startup is OFF and reuses the pane", async () => {
+  const context = setup();
+  const { plugin, leaf, activeFile } = context;
+  jest.spyOn(plugin, "loadData").mockResolvedValue({ openOnStartup: false });
+  await plugin.onload();
+  const open = await layoutReady(context);
+  for (const id of ["show-calendar-view", "open-weekly-note", "reveal-active-note"]) {
+    await plugin.commands.find(command => command.id === id).callback();
+    await open.mock.results[open.mock.results.length - 1].value;
+  }
+  const view = leaf.view as unknown as { openOrCreateWeeklyNote: jest.Mock; revealActiveNote: jest.Mock };
+  expect(view.openOrCreateWeeklyNote).toHaveBeenCalledWith(expect.anything(), false);
+  expect(view.revealActiveNote).toHaveBeenCalledWith(activeFile);
+  expect(leaf.setViewState).toHaveBeenCalledTimes(1);
+  expect(context.app.workspace.revealLeaf).toHaveBeenCalledTimes(3);
+});
+
+it("does not open after unloading before layout is ready", async () => {
+  const context = setup();
+  await context.plugin.onload();
+  context.plugin.onunload();
+  expect(await layoutReady(context)).not.toHaveBeenCalled();
+  expect(context.leaf.setViewState).not.toHaveBeenCalled();
+  expect(context.app.workspace.revealLeaf).not.toHaveBeenCalled();
+  expect(context.original.detach).not.toHaveBeenCalled();
+});
 
 it("coexists with Calendar and only closes the fork's pane", async () => {
   const { app, plugin, leaf, original } = setup();

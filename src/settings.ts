@@ -8,6 +8,7 @@ import type CalendarDeadlinesPlugin from "./main";
 import { localeWeekSpec } from "./ui/locale";
 
 export interface ISettings {
+  openOnStartup: boolean;
   wordsPerDot: number;
   weekStart: IWeekStartOption;
   shouldConfirmBeforeCreate: boolean;
@@ -32,6 +33,7 @@ const weekdays = [
 ];
 
 export const defaultSettings = Object.freeze({
+  openOnStartup: true,
   shouldConfirmBeforeCreate: true,
   weekStart: "locale" as IWeekStartOption,
 
@@ -82,6 +84,7 @@ export class CalendarDeadlinesSettingsTab extends PluginSettingTab {
     this.addWeekStartSetting();
     this.addConfirmCreateSetting();
     this.addShowWeeklyNoteSetting();
+    this.addOpenOnStartupSetting();
 
     if (
       this.plugin.options.showWeeklyNote &&
@@ -171,6 +174,20 @@ export class CalendarDeadlinesSettingsTab extends PluginSettingTab {
         toggle.onChange(async (value) => {
           this.plugin.writeOptions(() => ({ showWeeklyNote: value }));
           this.display(); // show/hide weekly settings
+        });
+      });
+  }
+
+  addOpenOnStartupSetting(): void {
+    new Setting(this.containerEl)
+      .setName("Open panel on startup")
+      .setDesc(
+        "Automatically open Calendar Deadlines when Obsidian starts or this plugin is enabled. Changes apply the next time the plugin loads."
+      )
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.options.openOnStartup);
+        toggle.onChange(async (value) => {
+          await this.plugin.writeOptions(() => ({ openOnStartup: value }));
         });
       });
   }

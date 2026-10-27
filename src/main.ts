@@ -72,7 +72,7 @@ export default class CalendarDeadlinesPlugin extends Plugin {
     this.addSettingTab(new CalendarDeadlinesSettingsTab(this.app, this));
 
     this.app.workspace.onLayoutReady(() => {
-      if (!this.unloading) void this.initLeaf();
+      if (!this.unloading && this.options.openOnStartup) void this.initLeaf();
     });
   }
 
